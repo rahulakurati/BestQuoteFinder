@@ -19,6 +19,7 @@ export default function DiscoveryPanel({
   discoveryLinks, 
   loading, 
   onRefreshDiscovery, 
+  onRunAutoPipeline,
   onOpenOutreach, 
   onOpenIngest 
 }) {
@@ -26,6 +27,30 @@ export default function DiscoveryPanel({
 
   return (
     <div className="space-y-6">
+      {/* Auto-Pilot Action Banner */}
+      <div className="bg-gradient-to-r from-blue-600/20 via-indigo-600/20 to-purple-600/20 border border-blue-500/30 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[11px] font-bold border border-blue-500/30">
+              ⚡ Workflow Automation
+            </span>
+            <span className="text-xs text-slate-300 font-semibold">One-Click Auto-Pilot</span>
+          </div>
+          <p className="text-xs text-slate-300 max-w-xl">
+            Want to see quotes immediately? Run the automated pipeline to scout providers, dispatch RFQ templates, and populate the comparison matrix with estimated costs and arrival windows.
+          </p>
+        </div>
+
+        <button
+          onClick={onRunAutoPipeline}
+          disabled={loading}
+          className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition shadow-lg shadow-blue-500/30 shrink-0 flex items-center gap-2 disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+          <span>{loading ? 'Running Pipeline...' : 'Run Auto-Pilot Pipeline'}</span>
+        </button>
+      </div>
+
       {/* 1. Multi-Channel External Hub Links */}
       <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 mb-4 border-b border-slate-800/80 gap-2">

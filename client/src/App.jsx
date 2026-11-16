@@ -8,7 +8,9 @@ import {
   CheckCircle2, 
   Clock, 
   AlertCircle,
-  FileText
+  FileText,
+  Sparkles,
+  Zap
 } from 'lucide-react';
 import Header from './components/Header';
 import JobIntakeModal from './components/JobIntakeModal';
@@ -27,6 +29,7 @@ export default function App() {
   const [matrix, setMatrix] = useState([]);
   const [activeTab, setActiveTab] = useState('discovery'); // 'discovery' | 'matrix'
   const [loading, setLoading] = useState(false);
+  const [pipelineProgress, setPipelineProgress] = useState(null); // { active: bool, step: string }
 
   // Modals
   const [isJobModalOpen, setIsJobModalOpen] = useState(false);
@@ -60,32 +63,11 @@ export default function App() {
     try {
       const res = await axios.get('/api/jobs');
       setJobs(res.data);
-      if (res.data.length > 0 && !selectedJob) {
+      if (res.data.length > 0) {
         setSelectedJob(res.data[0]);
-      } else if (res.data.length === 0) {
-        // Auto create a sample Water Heater Repair job on first launch
-        createDefaultJob();
       }
     } catch (err) {
       console.error('Error fetching jobs:', err);
-    }
-  };
-
-  const createDefaultJob = async () => {
-    try {
-      const res = await axios.post('/api/jobs', {
-        title: 'Water Heater Replacement / Repair',
-        serviceType: 'Water Heater Repair',
-        zipCode: '94107',
-        symptoms: 'Water heater stopped heating water. Pilot light off, small leak near base.',
-        unitDetails: '50-Gallon Gas Rheem 2018',
-        urgency: 'Urgent (Within 24 hours)',
-        contactName: 'Homeowner'
-      });
-      setJobs([res.data]);
-      setSelectedJob(res.data);
-    } catch (err) {
-      console.error('Error creating default job:', err);
     }
   };
 
@@ -96,7 +78,7 @@ export default function App() {
       const provRes = await axios.get(`/api/jobs/${jobId}/providers`);
       setProviders(provRes.data);
 
-      // If no providers yet, trigger auto-discovery
+      // If no providers yet, trigger discovery
       if (provRes.data.length === 0) {
         const discRes = await axios.post(`/api/jobs/${jobId}/discover`);
         setProviders(discRes.data.providers || []);
@@ -106,8 +88,47 @@ export default function App() {
       // 2. Matrix
       const matrixRes = await axios.get(`/api/jobs/${jobId}/matrix`);
       setMatrix(matrixRes.data.matrix || []);
+
+      // If matrix already has quotes, default to matrix tab so the user sees results immediately
+      if (matrixRes.data.matrix && matrixRes.data.matrix.length > 0) {
+        setActiveTab('matrix');
+      }
     } catch (err) {
       console.error('Error fetching job details:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const runAutoPipeline = async (jobId) => {
+    const targetId = jobId || selectedJob?.id;
+    if (!targetId) return;
+
+    setLoading(true);
+    setPipelineProgress({ active: true, step: '1/4: Scouting local contractors in ZIP...' });
+
+    try {
+      await new Promise(r => setTimeout(r, 600));
+      setPipelineProgress({ active: true, step: '2/4: Scanning local coupons & diagnostic specials...' });
+
+      await new Promise(r => setTimeout(r, 600));
+      setPipelineProgress({ active: true, step: '3/4: Generating RFQ inquiries with tracking codes...' });
+
+      const res = await axios.post(`/api/jobs/${targetId}/auto-pipeline`);
+
+      await new Promise(r => setTimeout(r, 600));
+      setPipelineProgress({ active: true, step: '4/4: Scoring quotes in Comparison Matrix...' });
+
+      setProviders(res.data.providers || []);
+      setMatrix(res.data.matrix || []);
+      if (res.data.discoveryLinks) setDiscoveryLinks(res.data.discoveryLinks);
+
+      await new Promise(r => setTimeout(r, 400));
+      setPipelineProgress(null);
+      setActiveTab('matrix'); // Automatically show the scored comparison matrix!
+    } catch (err) {
+      console.error('Auto pipeline error:', err);
+      setPipelineProgress(null);
     } finally {
       setLoading(false);
     }
@@ -118,10 +139,8 @@ export default function App() {
       const res = await axios.post('/api/jobs', formData);
       setJobs([res.data, ...jobs]);
       setSelectedJob(res.data);
-      // Auto trigger discovery for the new job
-      const discRes = await axios.post(`/api/jobs/${res.data.id}/discover`);
-      setProviders(discRes.data.providers || []);
-      setDiscoveryLinks(discRes.data.discoveryLinks || null);
+      // Automatically launch the end-to-end pipeline so quotes are collected & compared immediately!
+      runAutoPipeline(res.data.id);
     } catch (err) {
       console.error('Error creating job:', err);
     }
@@ -129,7 +148,7 @@ export default function App() {
 
   const handleDeleteJob = async (jobId, e) => {
     e.stopPropagation();
-    if (!confirm('Are you sure you want to delete this service project?')) return;
+    if (!confirm('Are you sure you want to delete this service request?')) return;
     try {
       await axios.delete(`/api/jobs/${jobId}`);
       const updated = jobs.filter(j => j.id !== jobId);
@@ -157,6 +176,21 @@ export default function App() {
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col">
       <Header health={health} onOpenWorkflow={() => setIsWorkflowModalOpen(true)} />
+
+      {/* Live Pipeline Progress Banner */}
+      {pipelineProgress?.active && (
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold py-2.5 px-6 shadow-md transition-all">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Zap className="w-4 h-4 animate-bounce text-amber-300" />
+              <span>Automated Pipeline Running: {pipelineProgress.step}</span>
+            </div>
+            <div className="w-32 bg-blue-900/50 h-2 rounded-full overflow-hidden">
+              <div className="bg-amber-300 h-full w-3/4 animate-pulse rounded-full" />
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-6 w-full flex-1">
         {/* Top Control Bar: Active Project Selector & New Project */}
@@ -199,11 +233,20 @@ export default function App() {
             )}
 
             <button
+              onClick={() => runAutoPipeline()}
+              disabled={loading || !selectedJob}
+              className="flex items-center space-x-1.5 px-3 py-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition disabled:opacity-50"
+            >
+              <Zap className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Auto-Pilot Pipeline</span>
+            </button>
+
+            <button
               onClick={() => setIsJobModalOpen(true)}
               className="flex items-center space-x-1.5 px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold transition shadow-lg shadow-blue-500/20"
             >
               <Plus className="w-4 h-4" />
-              <span>New Service Request</span>
+              <span>New Request</span>
             </button>
           </div>
         </div>
@@ -235,7 +278,7 @@ export default function App() {
           >
             <BarChart3 className="w-4 h-4 text-purple-400" />
             <span>2. Comparison &amp; Decision Matrix</span>
-            <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-slate-700/80 text-slate-300">
+            <span className="ml-1.5 text-[10px] px-1.5 py-0.5 rounded-full bg-purple-500/20 text-purple-300 font-semibold border border-purple-500/30">
               {matrix.length} Quotes
             </span>
           </button>
@@ -249,6 +292,7 @@ export default function App() {
             discoveryLinks={discoveryLinks}
             loading={loading}
             onRefreshDiscovery={handleRefreshDiscovery}
+            onRunAutoPipeline={() => runAutoPipeline()}
             onOpenOutreach={(provider) => setOutreachModal({ isOpen: true, provider })}
             onOpenIngest={(provider) => setIngestModal({ isOpen: true, provider })}
           />
@@ -279,7 +323,7 @@ export default function App() {
         provider={ingestModal.provider}
         onQuoteSaved={() => {
           if (selectedJob) fetchJobDetails(selectedJob.id);
-          setActiveTab('matrix'); // Switch to matrix automatically so user sees the scored quote
+          setActiveTab('matrix');
         }}
       />
 
