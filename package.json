@@ -6,6 +6,10 @@
   "main": "server/index.js",
   "scripts": {
     "quote": "node cli.js",
+    "auth:facebook": "node scripts/authSession.js facebook",
+    "auth:thumbtack": "node scripts/authSession.js thumbtack",
+    "auth:google": "node scripts/authSession.js google",
+    "scout:facebook": "node scripts/searchFacebookGroup.js",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "node server/index.js",
     "client": "npm --prefix client run dev",
@@ -28,6 +32,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "nodemailer": "^6.9.16",
+    "playwright-core": "^1.65.1",
     "uuid": "^11.0.5"
   },
   "devDependencies": {
