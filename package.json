@@ -5,6 +5,7 @@
   "description": "Automated Multi-Channel Service Discovery, Outreach & Quote Comparison Engine",
   "main": "server/index.js",
   "scripts": {
+    "quote": "node cli.js",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "node server/index.js",
     "client": "npm --prefix client run dev",
