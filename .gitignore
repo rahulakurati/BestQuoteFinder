@@ -1,0 +1,49 @@
+# Environment and Secret files - NEVER COMMIT
+.env
+.env.local
+.env.*.local
+*.env
+*.pem
+*.key
+*.cert
+credentials.json
+token.json
+client_secrets.json
+
+# Session storage, cookies and tokens
+auth/
+sessions/
+cookies/
+*.session
+auth_state.json
+
+# Database and SQLite data
+data/
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Production builds
+dist/
+build/
+.next/
+out/
+
+# Logs
+logs/
+*.log
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp

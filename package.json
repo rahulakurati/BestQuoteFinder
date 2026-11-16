@@ -1,0 +1,35 @@
+{
+  "name": "best-quote-finder",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Automated Multi-Channel Service Discovery, Outreach & Quote Comparison Engine",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "node server/index.js",
+    "client": "npm --prefix client run dev",
+    "build": "npm --prefix client run build",
+    "install:all": "npm install && npm --prefix client install"
+  },
+  "keywords": [
+    "quote-comparison",
+    "service-finder",
+    "contractors",
+    "automated-outreach",
+    "rfq"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.7.9",
+    "cheerio": "^1.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "nodemailer": "^6.9.16",
+    "uuid": "^11.0.5"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
