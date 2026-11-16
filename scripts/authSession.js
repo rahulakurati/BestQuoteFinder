@@ -36,6 +36,19 @@ const PLATFORMS = {
       return cookies.some(c => c.name.includes('session') || c.name.includes('auth') || c.name.includes('user'));
     }
   },
+  nextdoor: {
+    name: 'Nextdoor',
+    url: 'https://nextdoor.com/login/',
+    sessionFile: path.join(SESSIONS_DIR, 'nextdoor.json'),
+    checkLogin: async (context, page) => {
+      const url = page.url();
+      if (!url.includes('/login') && (url.includes('/news_feed') || url.includes('/home') || url.includes('nextdoor.com/'))) {
+        return true;
+      }
+      const cookies = await context.cookies();
+      return cookies.some(c => c.name === 'sessionid' || c.name === 'auth_token');
+    }
+  },
   google: {
     name: 'Google',
     url: 'https://accounts.google.com/',
@@ -92,7 +105,7 @@ async function authenticate(platformKey) {
 
     const interval = setInterval(async () => {
       try {
-        const loggedIn = await target.checkLogin(context);
+        const loggedIn = await target.checkLogin(context, page);
         if (loggedIn) {
           clearInterval(interval);
           resolve('auto');
