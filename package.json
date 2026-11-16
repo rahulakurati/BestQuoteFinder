@@ -11,6 +11,7 @@
     "auth:thumbtack": "node scripts/authSession.js thumbtack",
     "auth:google": "node scripts/authSession.js google",
     "scout:facebook": "node scripts/searchFacebookGroup.js",
+    "scout:communities": "node scripts/searchLocalCommunities.js",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "node server/index.js",
     "client": "npm --prefix client run dev",
